@@ -36,11 +36,11 @@ public class FullTest {
         UploadFile.upload(src, des);
         end = System.currentTimeMillis();
         LOG.info("uploading file finished ,using " + ((end - start) / 1000) + " seconds");
-        LOG.info("generate Secondary MetaData from local file system ......");
+/*        LOG.info("generate Secondary MetaData from local file system ......");
         start = System.currentTimeMillis();
         VMDProtoUtil.writeMeta(src);
         end = System.currentTimeMillis();
-        LOG.info("generating Secondary MetaData file finished ,using " + ((end - start)) + " milliseconds");
+        LOG.info("generating Secondary MetaData file finished ,using " + ((end - start)) + " milliseconds");*/
         LOG.info("generate Secondary MetaData from HDFS ......");
         start = System.currentTimeMillis();
         VMDProtoUtil.writeMeta(des);

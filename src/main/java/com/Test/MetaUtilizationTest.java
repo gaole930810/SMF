@@ -37,7 +37,7 @@ public class MetaUtilizationTest {
         root.addAppender(new ConsoleAppender(
                 new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
         root.setLevel(Level.INFO);
-        Path path = new Path("hdfs://vm1:9000/yty/video/Test.mkv");
+        Path path = new Path(args[1]);
         FileSystem hdfs = null;
         try {
             hdfs = FileSystem.get(ConfUtil.generate());
