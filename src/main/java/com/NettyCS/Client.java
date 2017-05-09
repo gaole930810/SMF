@@ -1,64 +1,69 @@
 package com.NettyCS;
 
-import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.*;
 
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.SimpleChannelHandler;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.serialization.ClassResolvers;
-import org.jboss.netty.handler.codec.serialization.ObjectDecoder;
-import org.jboss.netty.handler.codec.serialization.ObjectEncoder;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
 
-/** 
- * Netty 客户端代码 
- *  
- * @author lihzh 
- * @alia OneCoder 
- * @blog http://www.coderli.com 
- */  
-public class Client {  
-  
-    public static void main(String args[]) {  
-        // Client服务启动器  
-        ClientBootstrap bootstrap = new ClientBootstrap();  
-        bootstrap.setFactory(new NioClientSocketChannelFactory(  
-                Executors.newCachedThreadPool(),  
-                Executors.newCachedThreadPool()));  
-        // 设置一个处理服务端消息和各种消息事件的类(Handler)  
-        bootstrap.setPipelineFactory(new ChannelPipelineFactory() {  
-            @Override              
-            public ChannelPipeline getPipeline()throws Exception {
-                return Channels.pipeline(new ObjectEncoder(),
-                        new ObjectClientHandler());
-            }
-            /*public ChannelPipeline getPipeline() throws Exception {  
-                return Channels.pipeline(new HelloClientHandler());  
-            } */ 
-        });  
-        // 连接到本地的8000端口的服务端  
-        bootstrap.connect(new InetSocketAddress(  
-                "127.0.0.1", 8000));  
-    }  
-  
-    private static class HelloClientHandler extends SimpleChannelHandler {  
-  
-  
-        /** 
-         * 当绑定到服务端的时候触发，打印"Hello world, I'm client." 
-         *  
-         * @alia OneCoder 
-         * @author lihzh 
-         */  
-        @Override  
-        public void channelConnected(ChannelHandlerContext ctx,  
-                ChannelStateEvent e) {  
-            System.out.println("Hello world, I'm client.");  
-        }  
-    }  
-}  
+public class Client {
+    /**
+     * 日志
+     */
+	public static final Log LOG = LogFactory.getLog(Server.class);
+    public static Logger logger = Logger.getRootLogger();
+//    private Logger logger = LoggerFactory.getLogger(Server.class);
+
+    private String HOST;
+    private int PORT;
+
+    public Client(String HOST, int PORT) {
+        this.HOST = HOST;
+        this.PORT = PORT;
+    }
+
+    public void connect(Command command){
+    	logger.addAppender(new ConsoleAppender(
+                new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
+    	logger.setLevel(Level.INFO);
+        //配置客户端NIO线程组
+        EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(eventLoopGroup)
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY,true)
+                    .handler(new ClientInitializer(command));
+            //发起异步连接操作
+            logger.debug("发起异步连接操作 - start");
+            System.out.println("发起异步连接操作 - start");
+            
+            ChannelFuture channelFuture = bootstrap.connect(HOST,PORT).sync();
+            
+            logger.debug("发起异步连接操作 - end");
+            System.out.println("发起异步连接操作 - end");
+            
+            
+            //等待客户端链路关闭
+            logger.debug("等待客户端链路关闭 - start");
+            System.out.println("等待客户端链路关闭 - start");
+            
+            channelFuture.channel().closeFuture().sync();
+            
+            logger.debug("等待客户端链路关闭 - end");
+            System.out.println("等待客户端链路关闭 - end");
+            
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage(),e);
+            System.out.println(e.getMessage());
+        }finally {
+            //关闭
+            eventLoopGroup.shutdownGracefully();
+        }
+    }
+}
