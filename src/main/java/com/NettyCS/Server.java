@@ -54,7 +54,6 @@ public class Server {
      * 日志
      */
     public static final Log LOG = LogFactory.getLog(Server.class);
-    public static Logger logger = Logger.getRootLogger();
     
 //    private static Logger logger = LoggerFactory.getLogger(Server.class);
     
@@ -141,17 +140,18 @@ public class Server {
 		Path path = new Path(url);
 //		System.out.println("正在处理：\n"+url+"\n"+FrameNo+" "+res[0]+" "+res[1]);
 		List<SecondaryMetaClass.SecondaryMeta.FrameInfoGroup> fig = smf.get(path);
-        LOG.info(fig.size());
+        LOG.debug(fig.size());
         res[0] = fig.get(FrameNo).getStartIndex();
-        LOG.info("test_startIndex : " + res[0]);
+        LOG.debug("test_startIndex : " + res[0]);
         res[1] = fig.get(FrameNo).getStartFrameNo();
-        LOG.info("test_StartFrameNo : " + res[1]);
+        LOG.debug("test_StartFrameNo : " + res[1]);
 		return res;
 	}
     public void bind() {
-    	logger.addAppender(new ConsoleAppender(
+/*    	Logger root = Logger.getRootLogger();
+    	root.addAppender(new ConsoleAppender(
                 new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
-    	logger.setLevel(Level.INFO);
+    	root.setLevel(Level.INFO);*/
         /*
         NioEventLoopGroup是线程池组
                      包含了一组NIO线程,专门用于网络事件的处理
@@ -169,24 +169,24 @@ public class Server {
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 1024)//配置TCP参数,能够设置很多,这里就只设置了backlog=1024,
                     .childHandler(new ServerInitializer());//绑定I/O事件处理类
-            logger.debug("绑定端口号:" + PORT + ",等待同步成功");
+            LOG.debug("绑定端口号:" + PORT + ",等待同步成功");
             System.out.println("绑定端口号:" + PORT + ",等待同步成功");
             /*
             bind:绑定端口
             sync:同步阻塞方法,等待绑定完成,完成后返回 ChannelFuture ,主要用于通知回调
              */
             ChannelFuture channelFuture = serverBootstrap.bind(PORT).sync();
-            logger.debug("等待服务端监听窗口关闭");
+            LOG.debug("等待服务端监听窗口关闭");
             System.out.println("等待服务端监听窗口关闭");
             /*
              closeFuture().sync():为了阻塞,服务端链路关闭后才退出.也是一个同步阻塞方法
              */
             channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {
-            logger.error(e.getMessage(), e);
+        	LOG.error(e.getMessage(), e);
             System.out.println(e.getMessage());
         } finally {
-            logger.debug("退出,释放线程池资源");
+        	LOG.debug("退出,释放线程池资源");
             System.out.println("退出,释放线程池资源");
             bossGroup.shutdownGracefully();
             workGroup.shutdownGracefully();

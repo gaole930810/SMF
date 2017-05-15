@@ -26,22 +26,22 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 	/**
 	 * 日志
 	 */
-	public static final Log LOG = LogFactory.getLog(Server.class);
-	public static Logger logger = Logger.getRootLogger();
+	public static final Log LOG  = LogFactory.getLog(Server.class);
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-		logger.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
-		logger.setLevel(Level.INFO);
+		/*Logger root = Logger.getRootLogger();
+	    root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
+		root.setLevel(Level.INFO);*/
 		// ByteBuf,类似于NIO中的ByteBuffer,但是更强大
 		ByteBuf reqBuf = (ByteBuf) msg; // msg： 命令+url
 		Command command = new Command(reqBuf);
 		// 获取请求字符串
 		// String req = getReq(reqBuf);
 
-		logger.debug("From:" + ctx.channel().remoteAddress());
+		LOG.debug("From:" + ctx.channel().remoteAddress());
 		System.out.println("From:" + ctx.channel().remoteAddress());
 
-		logger.debug("服务端收到:" + command.Type);
+		LOG.debug("服务端收到:" + command.Type);
 		System.out.println("服务端收到:" + command.Type);
 		String resStr;
 		ByteBuf resBuf;
@@ -55,17 +55,17 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 			// 获取发送给客户端的数据
 			resBuf = getRes(resStr);
 
-			logger.debug("服务端应答数据:\n" + resStr);
+			LOG.debug("服务端应答数据:\n" + resStr);
 			System.out.println("服务端应答数据:\n" + resStr);
 			ctx.write(resBuf);
 			break;
 		case Command.GET_FRAME:
 			if (command.args.length != 2) {
-				logger.info("args error!");
+				LOG.info("args error!");
 			}
 			url = command.args[0];
 			int FrameNo = Integer.parseInt(command.args[1]);			
-			logger.debug("请求帧号：" + FrameNo);
+			LOG.debug("请求帧号：" + FrameNo);
 			System.out.println("请求帧号：" + FrameNo);
 			long res1 = 0;
 			long res2 = 0;
@@ -75,13 +75,13 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 			res2=res[1];			
 			resStr = String.valueOf(res1) + " " + String.valueOf(res2);
 			resBuf = getRes(resStr);
-			logger.debug("服务端应答数据:" + resStr);
+			LOG.debug("服务端应答数据:" + resStr);
 			System.out.println("服务端应答数据:" + resStr);
 			ctx.write(resBuf);
 			break;
 		case Command.DELETE:
 			if (command.args.length != 1) {
-				logger.info("args error!");
+				LOG.info("args error!");
 			}
 			url = command.args[0];
 			// 添加方法
@@ -89,13 +89,13 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 
 			resStr = "DELETE SUCCESS";
 			resBuf = getRes(resStr);
-			logger.debug("服务端应答数据:\n" + resStr);
+			LOG.debug("服务端应答数据:\n" + resStr);
 			System.out.println("服务端应答数据:\n" + resStr);
 			ctx.write(resBuf);
 			break;
 		case Command.GENERATE:
 			if (command.args.length != 1) {
-				logger.info("args error!");
+				LOG.info("args error!");
 			}
 			url = command.args[0];
 			// 添加方法
@@ -104,13 +104,13 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 			else
 				resStr = "GENERATE FAILED";
 			resBuf = getRes(resStr);
-			logger.debug("服务端应答数据:\n" + resStr);
+			LOG.debug("服务端应答数据:\n" + resStr);
 			System.out.println("服务端应答数据:\n" + resStr);
 			ctx.write(resBuf);
 			break;
 		default:
 			// 丢弃
-			logger.debug("丢弃");
+			LOG.debug("丢弃");
 			System.out.println("丢弃");
 			ReferenceCountUtil.release(msg);
 			break;
@@ -153,14 +153,14 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 	@Override
 	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
 		// 将消息发送队列中的消息写入到SocketChannel中发送给对方
-		logger.debug("channelReadComplete");
+		LOG.debug("channelReadComplete");
 		ctx.flush();
 	}
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		// 发生异常时,关闭 ChannelHandlerContext,释放ChannelHandlerContext 相关的句柄等资源
-		logger.error("exceptionCaught");
+		LOG.error("exceptionCaught");
 		ctx.close();
 	}
 }

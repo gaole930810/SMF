@@ -16,7 +16,7 @@ public class Client {
      * 日志
      */
 	public static final Log LOG = LogFactory.getLog(Server.class);
-    public static Logger logger = Logger.getRootLogger();
+    
 //    private Logger logger = LoggerFactory.getLogger(Server.class);
 
     private String HOST;
@@ -28,9 +28,10 @@ public class Client {
     }
 
     public void connect(Command command){
-    	logger.addAppender(new ConsoleAppender(
+    	/*Logger root = Logger.getRootLogger();
+    	root.addAppender(new ConsoleAppender(
                 new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
-    	logger.setLevel(Level.INFO);
+    	root.setLevel(Level.INFO);*/
         //配置客户端NIO线程组
         EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
         try {
@@ -40,26 +41,26 @@ public class Client {
                     .option(ChannelOption.TCP_NODELAY,true)
                     .handler(new ClientInitializer(command));
             //发起异步连接操作
-            logger.debug("发起异步连接操作 - start");
+            LOG.debug("发起异步连接操作 - start");
             System.out.println("发起异步连接操作 - start");
             
             ChannelFuture channelFuture = bootstrap.connect(HOST,PORT).sync();
             
-            logger.debug("发起异步连接操作 - end");
+            LOG.debug("发起异步连接操作 - end");
             System.out.println("发起异步连接操作 - end");
             
             
             //等待客户端链路关闭
-            logger.debug("等待客户端链路关闭 - start");
+            LOG.debug("等待客户端链路关闭 - start");
             System.out.println("等待客户端链路关闭 - start");
             
             channelFuture.channel().closeFuture().sync();
             
-            logger.debug("等待客户端链路关闭 - end");
+            LOG.debug("等待客户端链路关闭 - end");
             System.out.println("等待客户端链路关闭 - end");
             
         } catch (InterruptedException e) {
-            logger.error(e.getMessage(),e);
+        	LOG.error(e.getMessage(),e);
             System.out.println(e.getMessage());
         }finally {
             //关闭
