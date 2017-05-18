@@ -6,11 +6,18 @@ import java.util.concurrent.Semaphore;
 
 import com.NettyCS.Client;
 import com.NettyCS.Command;
+import com.NettyCS.Results;
 import com.NettyCS.Server;
 
 public class CTest {
+	private static String url="hdfs://vm1:9000/yty/video/Test4.rmvb";
 	public static void main(String[] args){
-		test_connect_NUM(50,50);
+//		test_connect_NUM(50,50);
+		url=args[1];
+		if(args[0].equals("GETTIME")) test_GET_TIME(url).print();
+		if(args[0].equals("DELETE")) test_DELETE(url).print();
+		if(args[0].equals("GETFRAME"))test_GET_FRAME(url,args[2]).print();
+		if(args[0].equals("GENERATE"))test_GENERATE(url).print();
 		return;
     }
 		
@@ -28,7 +35,7 @@ public class CTest {
                         // 获取许可
 //                        semp.acquire();                       
                         System.out.println("Thread并发事情>>>"+ NO);                                               
-                		test_GET_FRAME();                        
+                		test_GET_FRAME(url,"1");                        
 //                        semp.release();
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -42,19 +49,20 @@ public class CTest {
         return;
 	}
 	
-	public static void test_GET_FRAME(){
-		Command command=new Command(Command.GET_FRAME,"hdfs://vm1:9000/yty/video/Test4.rmvb",String.valueOf(1));
-		new Client("127.0.0.1", 8000).connect(command);
-		return;
+	public static Results test_GET_FRAME(String url,String FrameSeq){
+		Command command=new Command(Command.GET_FRAME,url,FrameSeq);		
+		return new Client(url).connect(command);
 	}
-	public static void test_GET_TIME(){
-		Command command=new Command(Command.GET_TIME);
-		new Client("127.0.0.1", 8000).connect(command);
-		return;
+	public static Results test_GET_TIME(String url){
+		Command command=new Command(Command.GET_TIME);		
+		return new Client(url).connect(command);
 	}
-	public static void test_GENERATE(){
-		Command command=new Command(Command.GENERATE,"D://filepath");
-		new Client("127.0.0.1", 8000).connect(command);
-		return;
-	}	
+	public static Results test_GENERATE(String url){
+		Command command=new Command(Command.GENERATE,url);		
+		return new Client(url).connect(command);
+	}
+	public static Results test_DELETE(String url){
+		Command command=new Command(Command.DELETE,url);		
+		return new Client(url).connect(command);
+	}
 }

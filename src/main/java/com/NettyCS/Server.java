@@ -7,7 +7,9 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,6 +24,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.log4j.*;
 import org.jboss.netty.util.internal.ConcurrentHashMap;
 
+import com.MemoryUtil.VMDFileUtil;
 import com.Proto.SecondaryMetaClass;
 import com.Proto.SecondaryMetaClass.SecondaryMeta;
 import com.Proto.SecondaryMetaClass.SecondaryMeta.FrameInfoGroup;
@@ -43,11 +46,13 @@ public class Server {
      * 服务端绑定端口号
      */
     private int PORT;
-    public static Map<Path, List<FrameInfoGroup>> smf = new ConcurrentHashMap<Path, List<FrameInfoGroup>>();
+    public static Map<String, List<FrameInfoGroup>> smf = new ConcurrentHashMap<String, List<FrameInfoGroup>>();
+    public static String localVMDFilesPath="/home/b8311/Experiment/ExperimentVMD/";
 
     public Server(int PORT){
         this.PORT = PORT;
-        initialSMFMap();
+//        initialSMFMap();
+        initialSMFMapFromLocalVMDFile();
     }
 
     /**
@@ -56,7 +61,23 @@ public class Server {
     public static final Log LOG = LogFactory.getLog(Server.class);
     
 //    private static Logger logger = LoggerFactory.getLogger(Server.class);
-    
+/**
+ * initial VMD from LocalVMDFile on Server Memory    
+ * @return boolean
+ */
+    public static boolean initialSMFMapFromLocalVMDFile(){
+    	File vmdfile=new File(localVMDFilesPath);
+    	File[] vmdfiles=vmdfile.listFiles();
+    	for(File file:vmdfiles){
+    		SecondaryMetaClass.SecondaryMeta sm =VMDFileUtil.GenerateMetaFromFile(file.getAbsolutePath());
+    		smf.put(sm.getVideoSummary(), sm.getFrameMetaInfoList());
+    	}
+    	return true;
+	}
+/**
+ * 已废弃的初始化操作    
+ * @return
+ */
     public static boolean initialSMFMap(){
     	Path path = new Path("hdfs://vm1:9000/yty/video/Test4.rmvb");
         FileSystem hdfs = null;
@@ -82,20 +103,29 @@ public class Server {
 //        }
         try{
             SecondaryMetaClass.SecondaryMeta sm = SecondaryMetaClass.SecondaryMeta.parseFrom(hdfs.open(new Path(ConfUtil.defaultFS + "/yty/meta/" + summary)));
-            smf.put(path,sm.getFrameMetaInfoList());
+            smf.put(path.toString(),sm.getFrameMetaInfoList());
         }catch (IOException e) {
             e.printStackTrace();
         }
         
 		return true;
 	}
+/**
+ * client request to GENERATE VMD to Memory
+ * @param url video path On hdfs
+ * @return boolean
+ */
 	public static boolean generateSMF(String url){
-		Path path =new Path(url);
+//		Path path =new Path(url);
+		if(smf.get(url)!=null){
+			LOG.info("VMD of "+url+"exist,Generate End...");
+			return true;
+		}
 		URLProtocolManager mgr = URLProtocolManager.getManager();
-        if (path.toString().startsWith("hdfs:"))
+        if (url.startsWith("hdfs:"))
             mgr.registerFactory("hdfs", new HDFSProtocolHandlerFactory());
         IContainer container = IContainer.make();
-        container.open(path.toString(), IContainer.Type.READ, null);
+        container.open(url, IContainer.Type.READ, null);
         boolean header = false;
         for (int i = 0; i < container.getNumStreams(); i++) {
             IStream stream = container.getStream(i);
@@ -118,28 +148,61 @@ public class Server {
                 }
             }
             LOG.debug(map.size());
-            SecondaryMeta SM = VMDProtoUtil.genProto(UploadFile.generateSummary(path)
+            SecondaryMeta SM = VMDProtoUtil.genProto(url
                     , Long.parseLong(ConfUtil.generate().get("dfs.blocksize"))
                     , container.getContainerFormat().getInputFormatShortName()
                     , container.getDuration()
                     , coder.getCodec().getName()
                     , frameNo
                     , map);
-            smf.put(path, SM.getFrameMetaInfoList());
+            smf.put(url, SM.getFrameMetaInfoList());
             container.close();
+            try {
+    			// FileInputStream ist=new FileInputStream(args[0]);
+            	Path p=new Path(url);
+        		String[] fn=p.getName().split("\\.");
+    			FileOutputStream fost = new FileOutputStream(localVMDFilesPath+ fn[0] + "_" + fn[1]);
+    			SM.writeTo(fost);
+    			fost.close();
+    		} catch (Exception e) {
+    			LOG.error(e.getMessage(), e);
+    			System.out.println(e);
+    		}
             return true;
         }
-        container.close();		
+        container.close();	
 		return false;
 	}
 	public static boolean deleteSMF(String url){
+		if(smf.get(url)==null){
+			LOG.info("no VMD of"+url+",Delete End...");
+			return true;
+		}
+		smf.remove(url);
+		Path p=new Path(url);
+		String[] fn=p.getName().split("\\.");
+		String LocalfilePath=localVMDFilesPath+fn[0]+"_"+fn[1];
+		File file=new File(LocalfilePath);
+		if(file.isFile()){
+			return file.delete();
+		}
 		return false;
 	}
+/**
+ * 找到相应的i帧索引及偏移量，若i帧字典不存在则生成一份到本机file和内存中。
+ * @param url video path On hdfs
+ * @param FrameNo 请求帧的帧号
+ * @return
+ */
 	public static long[] getSeqAndIndex(String url,int FrameNo){
 		long[] res=new long[2];
-		Path path = new Path(url);
 //		System.out.println("正在处理：\n"+url+"\n"+FrameNo+" "+res[0]+" "+res[1]);
-		List<SecondaryMetaClass.SecondaryMeta.FrameInfoGroup> fig = smf.get(path);
+		List<SecondaryMetaClass.SecondaryMeta.FrameInfoGroup> fig = smf.get(url);
+		if(fig==null){
+			LOG.info("no VMD of"+url+",Generating...");
+			generateSMF(url);
+			fig = smf.get(url);
+		}
         LOG.debug(fig.size());
         res[0] = fig.get(FrameNo).getStartIndex();
         LOG.debug("test_startIndex : " + res[0]);

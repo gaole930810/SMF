@@ -18,9 +18,11 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
      * 日志
      */
 	public static final Log LOG = LogFactory.getLog(Server.class);
-    public static Command command ;
-    public ClientHandler(Command command){
+    public Command command ;
+    public Results results;
+    public ClientHandler(Command command,Results results){
     	this.command=command;
+    	this.results=results;
     }
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -58,6 +60,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf byteBuf = (ByteBuf) msg;
         String resStr = getRes(byteBuf);
+        results.results=resStr;
         if(command.Type==Command.GET_FRAME){
         	String[] res=resStr.split("\\s");
             int frameseq = Integer.parseInt(res[0]);
@@ -69,6 +72,9 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         	LOG.debug("客户端收到:"+resStr);
             System.out.println("客户端收到:"+resStr);
         }else if(command.Type==Command.GET_TIME){
+        	LOG.debug("客户端收到:"+resStr);
+            System.out.println("客户端收到:"+resStr);
+        }else if(command.Type==Command.DELETE){
         	LOG.debug("客户端收到:"+resStr);
             System.out.println("客户端收到:"+resStr);
         }      
