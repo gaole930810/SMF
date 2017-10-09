@@ -35,14 +35,12 @@ public class XugglerDecompressor implements Decompressor {
      * @see org.apache.hadoop.io.compress.Decompressor#setInput(byte[], int, int)
      */
     public void setInput(byte[] b, int off, int len) {
-        // TODO Auto-generated method stub
     }
 
     /* (non-Javadoc)
      * @see org.apache.hadoop.io.compress.Decompressor#needsInput()
      */
     public boolean needsInput() {
-        // TODO Auto-generated method stub
         return false;
     }
 
@@ -51,15 +49,13 @@ public class XugglerDecompressor implements Decompressor {
      */
     public void setDictionary(byte[] b, int off, int len) {
         ByteArrayInputStream bis = new ByteArrayInputStream(b, off, len);
-        try (ObjectInputStream ois = new ObjectInputStream(bis)) {
+        try {
+            ObjectInputStream ois = new ObjectInputStream(bis);
             indices = (List<SecondaryMetaClass.SecondaryMeta.FrameInfoGroup>) ois.readObject();
             LOG.debug("De-serialized indices: size = " + indices.size());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     public boolean needsDictionary() {
@@ -67,21 +63,17 @@ public class XugglerDecompressor implements Decompressor {
     }
 
     public boolean finished() {
-        // TODO Auto-generated method stub
         return false;
     }
 
     public int decompress(byte[] b, int off, int len) {
-        // TODO Auto-generated method stub
         return 0;
     }
 
     public void reset() {
-        // TODO Auto-generated method stub
     }
 
     public void end() {
-        // TODO Auto-generated method stub
     }
 
     /**
@@ -126,7 +118,6 @@ public class XugglerDecompressor implements Decompressor {
 
     @Override
     public int getRemaining() {
-        // TODO Auto-generated method stub
         return 0;
     }
 

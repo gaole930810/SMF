@@ -27,7 +27,7 @@ public class KeyFrameTest {
         root.addAppender(new ConsoleAppender(
                 new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
         root.setLevel(Level.INFO);
-        Path path = new Path("hdfs://vm1:9000/yty/video/Test.mkv");
+        Path path = new Path("hdfs://vm1:9000/gl/780.mp4");
         FileSystem hdfs = null;
         try {
             hdfs = FileSystem.get(ConfUtil.generate());
@@ -37,6 +37,7 @@ public class KeyFrameTest {
             if (hdfs.isDirectory(path)) {
                 throw new FileNotFoundException("it is not a file URL");
             }
+            System.out.println("已连接");
         } catch (IOException e) {
             e.printStackTrace();
         }

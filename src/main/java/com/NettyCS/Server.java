@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +30,11 @@ import com.Proto.SecondaryMetaClass;
 import com.Proto.SecondaryMetaClass.SecondaryMeta;
 import com.Proto.SecondaryMetaClass.SecondaryMeta.FrameInfoGroup;
 import com.UtilClass.ConfUtil;
+import com.UtilClass.SummaryUtil;
 import com.UtilClass.UploadFile;
 import com.VMD.HDFSProtocolHandlerFactory;
 import com.VMD.VMDProtoUtil;
+import com.VMD.VideoMetaData;
 import com.VMD.XugglerDecompressor;
 import com.xuggle.xuggler.ICodec;
 import com.xuggle.xuggler.IContainer;
@@ -110,12 +113,44 @@ public class Server {
         
 		return true;
 	}
+    
+    
+    
+    
+    
+    
 /**
  * client request to GENERATE VMD to Memory
  * @param url video path On hdfs
  * @return boolean
+ * @throws IOException 
  */
-	public static boolean generateSMF(String url){
+    
+	public static boolean generateSMF(String url) throws IOException{
+//		Path path =new Path(url);
+		if(smf.containsKey(url)){
+			LOG.info("VMD of "+url+"exist,Generate End...");
+			return true;
+		}
+		SecondaryMeta SM=VideoMetaData.generateViaIndexEntry(url, ConfUtil.generate("vm1", "9000", "vm1"));
+		smf.put(url, SM.getFrameMetaInfoList());
+		try {
+			// FileInputStream ist=new FileInputStream(args[0]);
+        	Path p=new Path(url);
+    		String[] fn=p.getName().split("\\.");
+			FileOutputStream fost = new FileOutputStream(localVMDFilesPath+ fn[0] + "_" + fn[1]);
+			SM.writeTo(fost);
+			fost.close();
+			return true;
+		} catch (Exception e) {
+			LOG.error(e.getMessage(), e);
+			System.out.println(e);
+		}
+		return false;
+	}    
+    
+    
+/*	public static boolean generateSMF(String url){
 //		Path path =new Path(url);
 		if(smf.get(url)!=null){
 			LOG.info("VMD of "+url+"exist,Generate End...");
@@ -172,9 +207,9 @@ public class Server {
         }
         container.close();	
 		return false;
-	}
+	}*/
 	public static boolean deleteSMF(String url){
-		if(smf.get(url)==null){
+		if(!smf.containsKey(url)){
 			LOG.info("no VMD of"+url+",Delete End...");
 			return true;
 		}
@@ -193,8 +228,9 @@ public class Server {
  * @param url video path On hdfs
  * @param FrameNo 请求帧的帧号
  * @return
+ * @throws IOException 
  */
-	public static long[] getSeqAndIndex(String url,int FrameNo){
+	public static long[] getSeqAndIndex(String url,int FrameNo) throws IOException{
 		long[] res=new long[2];
 //		System.out.println("正在处理：\n"+url+"\n"+FrameNo+" "+res[0]+" "+res[1]);
 		List<SecondaryMetaClass.SecondaryMeta.FrameInfoGroup> fig = smf.get(url);
@@ -204,11 +240,31 @@ public class Server {
 			fig = smf.get(url);
 		}
         LOG.debug(fig.size());
-        res[0] = fig.get(FrameNo).getStartIndex();
+        /*if(FrameNo<fig.get(0).getStartFrameNo()){
+			res[0]=0;
+			res[1]=0;
+			return res;
+		}*/
+        int start = findStart(FrameNo,0,fig.size()-1,fig);
+        res[0] = fig.get(start).getStartIndex();
         LOG.debug("test_startIndex : " + res[0]);
-        res[1] = fig.get(FrameNo).getStartFrameNo();
+        res[1] = fig.get(start).getStartFrameNo();
         LOG.debug("test_StartFrameNo : " + res[1]);
 		return res;
+	}
+	public static int findStart(int FrameNo,int s,int e,List<SecondaryMetaClass.SecondaryMeta.FrameInfoGroup> fig){
+		int start=0;
+		SecondaryMetaClass.SecondaryMeta.FrameInfoGroup temp=null;
+		Iterator<SecondaryMetaClass.SecondaryMeta.FrameInfoGroup> iter=fig.iterator();
+		while(iter.hasNext()){
+			temp=iter.next();
+			if(temp.getStartFrameNo()>FrameNo){
+				start--;
+				break;
+			}
+			start++;
+		}
+		return start;
 	}
     public void bind() {
 /*    	Logger root = Logger.getRootLogger();

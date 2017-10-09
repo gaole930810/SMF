@@ -4,7 +4,7 @@ import java.security.NoSuchAlgorithmException;
 public class ServerHashUtil {
 	public static int findServerSeq(String url, int serverSize) {
 		String sha = SHA_256(url);
-		return sha.hashCode() % serverSize;
+		return Math.abs(sha.hashCode()) % serverSize;
 	}
 	private static String SHA_256(String strText) {
 		return SHA(strText, "SHA-256");

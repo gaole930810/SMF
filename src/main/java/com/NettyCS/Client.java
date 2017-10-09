@@ -24,17 +24,17 @@ public class Client {
     public  Results results=new Results();
     private String HOST="127.0.0.1";
     private int PORT=8000;
-    private String[] serversIP={
+    /*private String[] serversIP={
     	"172.16.10.101",
     	"172.16.10.102",
     	"172.16.10.103"
-    };
+    };*/
 
-    public Client(String url) {
-        this.HOST=serversIP[ServerHashUtil.findServerSeq(url,serversIP.length)];        
+    public Client() {                
     }
 
     public Results connect(Command command){
+    	HOST=getHost(command);
     	/*Logger root = Logger.getRootLogger();
     	root.addAppender(new ConsoleAppender(
                 new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
@@ -74,5 +74,46 @@ public class Client {
             eventLoopGroup.shutdownGracefully();
         }
         return results;
+    }
+    public String getHost(Command command){
+    	Results HostIP=new Results();
+    	Command GetHost=new Command(Command.GET_HOST,command.args[0]);
+    	String ServerMasterIP="172.16.10.110";
+    	int ServerMasterPORT=8000;
+    	 //配置客户端NIO线程组
+        EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(eventLoopGroup)
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY,true)
+                    .handler(new ClientZookeeperInitializer(HostIP,GetHost));
+            //发起异步连接操作
+            LOG.debug("发起异步连接操作 - start");
+            System.out.println("发起异步连接操作 - start");
+            
+            ChannelFuture channelFuture = bootstrap.connect(ServerMasterIP,ServerMasterPORT).sync();
+            
+            LOG.debug("发起异步连接操作 - end");
+            System.out.println("发起异步连接操作 - end");
+            
+            
+            //等待客户端链路关闭
+            LOG.debug("等待客户端链路关闭 - start");
+            System.out.println("等待客户端链路关闭 - start");
+            
+            channelFuture.channel().closeFuture().sync();
+            
+            LOG.debug("等待客户端链路关闭 - end");
+            System.out.println("等待客户端链路关闭 - end");
+            
+        } catch (InterruptedException e) {
+        	LOG.error(e.getMessage(),e);
+            System.out.println(e.getMessage());
+        }finally {
+            //关闭
+            eventLoopGroup.shutdownGracefully();
+        }
+    	return HostIP.results;
     }
 }

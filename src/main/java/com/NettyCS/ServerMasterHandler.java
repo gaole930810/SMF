@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * Handler主要用于对网络事件进行读写操作,是真正的业务类 通常只需要关注 channelRead 和 exceptionCaught 方法
  */
-public class ServerHandler extends ChannelInboundHandlerAdapter {
+public class ServerMasterHandler extends ChannelInboundHandlerAdapter {
 
 	/**
 	 * 日志
@@ -47,7 +47,18 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 		ByteBuf resBuf;
 		String url;
 		switch (command.Type) {
-
+		case Command.GET_HOST:
+			if (command.args.length != 1) {
+				LOG.info("args error!");
+			}
+			url = command.args[0];
+			// 添加方法
+			resStr = ServerMaster.findHost(url);
+			resBuf = getRes(resStr);
+			LOG.debug("服务端master应答数据:\n" + resStr);
+			System.out.println("服务端应答数据:\n" + resStr);
+			ctx.write(resBuf);
+			break;
 		case Command.GET_FRAME:
 			if (command.args.length != 2) {
 				LOG.info("args error!");

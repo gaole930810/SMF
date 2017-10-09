@@ -14,7 +14,9 @@ import org.apache.hadoop.fs.Path;
 import com.xuggle.xuggler.io.IURLProtocolHandler;
 
 /**
- * Created by yty on 2016/11/30.
+ * 实现一个操作HDFSDataInputStream的Handler，此处只实现了read方法，因为当前项目不需要write的方法。
+ *
+ * Modified by yty on 2017/06/17.
  */
 public class HDFSProtocolHandler implements IURLProtocolHandler {
 
@@ -22,7 +24,7 @@ public class HDFSProtocolHandler implements IURLProtocolHandler {
 
     private FSDataInputStream fIn;
 
-    private Path pile;
+    private Path path;
 
     private Configuration conf;
 
@@ -43,20 +45,17 @@ public class HDFSProtocolHandler implements IURLProtocolHandler {
     }
 
     public HDFSProtocolHandler(String input) {
-        // TODO Auto-generated constructor stub
-        pile = new Path(input);
-        conf = new Configuration();
+        path = new Path(input);
+        conf = ConfUtil.generate();
     }
 
     /* (non-Javadoc)
      * @see com.xuggle.xuggler.io.IURLProtocolHandler#close()
      */
     public int close() {
-        // TODO Auto-generated method stub
         try {
             fIn.close();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return 0;
@@ -66,42 +65,41 @@ public class HDFSProtocolHandler implements IURLProtocolHandler {
      * @see com.xuggle.xuggler.io.IURLProtocolHandler#isStreamed(java.lang.String, int)
      */
     public boolean isStreamed(String arg0, int arg1) {
-        // TODO Auto-generated method stub
         return false;
     }
 
     /*
      * 这里我们实现的版本是只读模式的，由于并没有涉及到写的相关操作，因此flag暂时无用。
+     *
+     * 能够正常读取数据流则返回0,无效的url返回-1,无效的hdfs FileSystem实例返回-2
+     *
      * (non-Javadoc)
      * @see com.xuggle.xuggler.io.IURLProtocolHandler#open(java.lang.String, int)
      */
     public int open(String url, int flags) {
         // 这里的我们只处理hdfs的url。如果不是hdfs的url，直接返回-1，代表读取失败。
-
-        LOG.debug("Opening HDFSProtocolHandler with " + url);
+        LOG.info("Opening HDFSProtocolHandler with " + url);
         if (url != null && !url.startsWith("hdfs:"))
             return -1;
 
         if (url != null)
-            pile = new Path(url);
+            path = new Path(url);
 
-        if (pile == null) return -1;
-        FileSystem hdfs;
+        if (path == null) return -1;
         try {
-            hdfs = FileSystem.get(ConfUtil.generate());
-
+            this.fs = FileSystem.get(this.conf);
         } catch (IOException e) {
-            LOG.debug("HDFS client can't build");
-            LOG.debug(e.getStackTrace());
+            LOG.info("HDFS client can't build");
+            LOG.info(e.getStackTrace());
             return -2;
         }
         try {
-            fIn = hdfs.open(pile);
+            fIn = this.fs.open(path);
         } catch (IOException e) {
-            LOG.debug("FSDataInputStream can't open");
+            LOG.info("FSDataInputStream can't open");
             return -2;
         }
-        LOG.debug("HDFSProtocolHandler opened");
+        LOG.info("HDFSProtocolHandler opened");
 
         return 0;
     }
@@ -121,13 +119,11 @@ public class HDFSProtocolHandler implements IURLProtocolHandler {
                     r += r2;
             }
 
-            // IUrlProtocolHandler wants return value to be zero if end of file
-            // is reached
+            // IUrlProtocolHandler 要求如果读取至文件末尾需要返回0
             if (r == -1)
                 r = 0;
 
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             r = -1;
         }
@@ -150,42 +146,39 @@ public class HDFSProtocolHandler implements IURLProtocolHandler {
         LOG.debug("seeking to " + offset + ", whence = " + whence);
         long pos;
         try {
-            FileStatus status = fs.getFileStatus(pile);
+            FileStatus status = fs.getFileStatus(path);
             long len = status.getLen();
-
             switch (whence) {
-                case SEEK_CUR:
+                case SEEK_CUR://从当前位置操作偏移量
                     long old_pos = fIn.getPos();
                     fIn.seek(old_pos + offset);
                     pos = old_pos - fIn.getPos();
                     break;
-                case SEEK_END:
+                case SEEK_END://从文件结尾操作偏移量
                     fIn.seek(len + offset);
                     pos = fIn.getPos() - len;
                     break;
-                case SEEK_SIZE:
+                case SEEK_SIZE://返回文件长度
                     pos = len;
                     break;
-                case SEEK_SET:
+                case SEEK_SET://直接设置数据流的位置到offset处
                 default:
                     fIn.seek(offset);
                     pos = fIn.getPos();
                     break;
             }
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             LOG.error(e.getMessage());
-            //e.printStackTrace();
             return -1;
         }
         return pos;
     }
 
     /* (non-Javadoc)
+    此处我们只实现读取数据流的方法
      * @see com.xuggle.xuggler.io.IURLProtocolHandler#write(byte[], int)
      */
     public int write(byte[] buf, int size) {
-        // TODO Auto-generated method stub
         return 0;
     }
 

@@ -14,7 +14,7 @@ public class CTest {
 	public static void main(String[] args){
 //		test_connect_NUM(50,50);
 		url=args[1];
-		if(args[0].equals("GETTIME")) test_GET_TIME(url).print();
+//		if(args[0].equals("GETTIME")) test_GET_TIME(url).print();
 		if(args[0].equals("DELETE")) test_DELETE(url).print();
 		if(args[0].equals("GETFRAME"))test_GET_FRAME(url,args[2]).print();
 		if(args[0].equals("GENERATE"))test_GENERATE(url).print();
@@ -51,18 +51,18 @@ public class CTest {
 	
 	public static Results test_GET_FRAME(String url,String FrameSeq){
 		Command command=new Command(Command.GET_FRAME,url,FrameSeq);		
-		return new Client(url).connect(command);
+		return new Client().connect(command);
 	}
-	public static Results test_GET_TIME(String url){
+/*	public static Results test_GET_TIME(String url){
 		Command command=new Command(Command.GET_TIME);		
 		return new Client(url).connect(command);
-	}
+	}*/
 	public static Results test_GENERATE(String url){
 		Command command=new Command(Command.GENERATE,url);		
-		return new Client(url).connect(command);
+		return new Client().connect(command);
 	}
 	public static Results test_DELETE(String url){
 		Command command=new Command(Command.DELETE,url);		
-		return new Client(url).connect(command);
+		return new Client().connect(command);
 	}
 }

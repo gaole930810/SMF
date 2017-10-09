@@ -13,16 +13,16 @@ import org.apache.log4j.*;
 
 import java.io.UnsupportedEncodingException;
 
-public class ClientHandler extends ChannelInboundHandlerAdapter {
+public class ClientZookeeperHandler extends ChannelInboundHandlerAdapter {
     /**
      * 日志
      */
 	public static final Log LOG = LogFactory.getLog(Server.class);
-    public Command command ;
-    public Results results;
-    public ClientHandler(Command command,Results results){
-    	this.command=command;
+	public Results results;
+	public Command command ;
+    public ClientZookeeperHandler(Results results,Command command){
     	this.results=results;
+    	this.command=command;
     }
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -30,8 +30,8 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     	root.addAppender(new ConsoleAppender(
                 new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
     	root.setLevel(Level.INFO);*/
-    	LOG.debug("客户端连接上了服务端");
-        System.out.println("客户端连接上了服务端");        
+    	LOG.debug("客户端连接上了服务端master");
+        System.out.println("客户端连接上了服务端master");        
 
         //发送请求
         ByteBuf reqBuf = getReq(command);
@@ -74,7 +74,12 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         }else if(command.Type==Command.DELETE){
         	LOG.debug("客户端收到:"+resStr);
             System.out.println("客户端收到:"+resStr);
-        }      
+        }else if(command.Type==Command.GET_HOST){
+        	String[] res=resStr.split("\\s");
+            String VideoURL = res[0];
+            LOG.debug("客户端收到:"+VideoURL);
+            System.out.println("客户端收到:"+VideoURL); 
+        }       
         
     }
 
