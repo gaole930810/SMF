@@ -31,12 +31,13 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                 new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
     	root.setLevel(Level.INFO);*/
     	LOG.debug("客户端连接上了服务端");
-        System.out.println("客户端连接上了服务端");        
+        //System.out.println("客户端连接上了服务端");        
 
         //发送请求
         ByteBuf reqBuf = getReq(command);
 
         ctx.writeAndFlush(reqBuf);
+		reqBuf.clear();
     }
 
     /**
@@ -60,21 +61,33 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf byteBuf = (ByteBuf) msg;
         String resStr = getRes(byteBuf);
+        byteBuf.clear();
         results.results=resStr;
         if(command.Type==Command.GET_FRAME){
         	String[] res=resStr.split("\\s");
             int frameseq = Integer.parseInt(res[0]);
             int index = Integer.parseInt(res[1]);
             LOG.debug("客户端收到:"+frameseq+" "+index);
-            System.out.println("客户端收到:"+frameseq+" "+index);  
+            //System.out.println("客户端收到:"+frameseq+" "+index);  
         }
         else if(command.Type==Command.GENERATE){
         	LOG.debug("客户端收到:"+resStr);
-            System.out.println("客户端收到:"+resStr);
+            //System.out.println("客户端收到:"+resStr);
         }else if(command.Type==Command.DELETE){
         	LOG.debug("客户端收到:"+resStr);
-            System.out.println("客户端收到:"+resStr);
-        }      
+            //System.out.println("客户端收到:"+resStr);
+        }
+    else if(command.Type==Command.UPLOAD){
+    	LOG.debug("客户端收到:"+resStr);
+        //System.out.println("客户端收到:"+resStr);
+    }else if(command.Type==Command.LS){
+    	LOG.debug("客户端收到:"+resStr);
+        //System.out.println("客户端收到:"+resStr);
+    }else if(command.Type==Command.GET){
+    	LOG.debug("客户端收到:"+resStr);
+        //System.out.println("客户端收到:"+resStr);
+    }      
+    
         
     }
 

@@ -1,5 +1,9 @@
 package com.Test;
 
+import java.io.IOException;
+
+import org.apache.zookeeper.KeeperException;
+
 import com.NettyCS.Client;
 import com.NettyCS.ServerMaster;
 

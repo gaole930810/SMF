@@ -7,7 +7,13 @@ import io.netty.buffer.ByteBuf;
 public class Command {
 	public int Type;
 	public String[] args;
+	public final static int UPLOAD=10;
+	public final static int LS=9;
+	public final static int GET=8;
+	public final static int ADD_VMDRE=7;
+	public final static int DET_VMDRE=6;
 	public final static int GET_HOST=5;
+	public final static int GET_Server=11;
 //	public final static int GET_TIME=4;
 	public final static int GET_FRAME=3;
 	public final static int DELETE=2;

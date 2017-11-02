@@ -1,5 +1,6 @@
 package com.NettyCS;
 
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerAdapter;
@@ -13,14 +14,14 @@ import org.apache.log4j.*;
 
 import java.io.UnsupportedEncodingException;
 
-public class ClientZookeeperHandler extends ChannelInboundHandlerAdapter {
+public class ServerZookeeperHandler extends ChannelInboundHandlerAdapter {
     /**
      * 日志
      */
 	public static final Log LOG = LogFactory.getLog(Server.class);
 	public Results results;
 	public Command command ;
-    public ClientZookeeperHandler(Results results,Command command){
+    public ServerZookeeperHandler(Results results,Command command){
     	this.results=results;
     	this.command=command;
     }
@@ -30,14 +31,13 @@ public class ClientZookeeperHandler extends ChannelInboundHandlerAdapter {
     	root.addAppender(new ConsoleAppender(
                 new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
     	root.setLevel(Level.INFO);*/
-    	LOG.debug("客户端连接上了服务端master");
-        //System.out.println("客户端连接上了服务端master");        
+    	LOG.debug("服务器连接上了服务端master");
+        //System.out.println("服务器连接上了服务端master");        
 
         //发送请求
         ByteBuf reqBuf = getReq(command);
 
         ctx.writeAndFlush(reqBuf);
-        reqBuf.clear();
     }
 
     /**
@@ -61,30 +61,34 @@ public class ClientZookeeperHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf byteBuf = (ByteBuf) msg;
         String resStr = getRes(byteBuf);
-        byteBuf.clear();
         results.results=resStr;
-        if(command.Type==Command.GET_FRAME){
+        if(command.Type==Command.ADD_VMDRE){
+            LOG.debug("服务器收到:"+resStr);
+            //System.out.println("客户端收到:"+frameseq+" "+index);  
+        }
+        else if(command.Type==Command.DET_VMDRE){
+        	LOG.debug("服务器收到:"+resStr);
+            //System.out.println("客户端收到:"+frameseq+" "+index);  
+        }
+        else if(command.Type==Command.GET_FRAME){
         	String[] res=resStr.split("\\s");
             int frameseq = Integer.parseInt(res[0]);
             int index = Integer.parseInt(res[1]);
-            LOG.debug("客户端收到:"+frameseq+" "+index);
+            LOG.debug("服务器收到:"+frameseq+" "+index);
             //System.out.println("客户端收到:"+frameseq+" "+index);  
         }
         else if(command.Type==Command.GENERATE){
-        	LOG.debug("客户端收到:"+resStr);
+        	LOG.debug("服务器收到:"+resStr);
             //System.out.println("客户端收到:"+resStr);
         }else if(command.Type==Command.DELETE){
-        	LOG.debug("客户端收到:"+resStr);
+        	LOG.debug("服务器收到:"+resStr);
             //System.out.println("客户端收到:"+resStr);
         }else if(command.Type==Command.GET_HOST){
         	String[] res=resStr.split("\\s");
-            String VideoHostIP = res[0];
-            LOG.debug("客户端收到:"+VideoHostIP);
+            String VideoURL = res[0];
+            LOG.debug("服务器收到:"+VideoURL);
             //System.out.println("客户端收到:"+VideoURL); 
-        }else if(command.Type==Command.LS){
-            LOG.debug("客户端收到:"+resStr);
-            //System.out.println("客户端收到:"+VideoURL); 
-        }        
+        }       
         
     }
 

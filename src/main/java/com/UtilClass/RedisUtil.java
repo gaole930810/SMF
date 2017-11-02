@@ -1,4 +1,4 @@
-package myapps.SecondaryMetaFramework;
+package com.UtilClass;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -13,7 +13,7 @@ public final class RedisUtil {
     private static int PORT = 6379;
     
     //访问密码
-    private static String AUTH = "admin";
+    private static String AUTH = "b8311";
     
     //可用连接实例的最大数目，默认值为8；
     //如果赋值为-1，则表示不限制；如果pool已经分配了maxActive个jedis实例，则此时pool的状态为exhausted(耗尽)。

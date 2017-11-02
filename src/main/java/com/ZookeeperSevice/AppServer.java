@@ -1,6 +1,7 @@
 package com.ZookeeperSevice;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.Random;
 import java.util.Scanner;
 import org.apache.zookeeper.CreateMode;
@@ -10,6 +11,8 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+
+import com.sun.management.OperatingSystemMXBean;
 public class AppServer {
     /**
      * zookeeper中集群服务器的总节点
@@ -23,7 +26,7 @@ public class AppServer {
     /**
      * 当前服务器的负载
      */
-    private int loadBalance=0;
+    private long loadBalance=0;
     /**
      * 连接zookeeper服务器，并在集群总结点下创建EPHEMERAL类型的子节点，把服务器名称存入子节点的数据
      * @param zookeeperServerHost
@@ -73,7 +76,8 @@ public class AppServer {
                 while(true){
                     try {
                         Thread.sleep(10000);
-                        loadBalance=new Random().nextInt(100000);
+                        loadBalance=getMemory();
+                        //loadBalance=new Random().nextInt(100000);
                         String l=String.valueOf(loadBalance);
                         System.out.println("服务器上传负载："+loadBalance);
                         zooKeeper.setData(serverNodePath, l.getBytes("utf-8"), -1);
@@ -86,6 +90,12 @@ public class AppServer {
             }
         }).start();
     }
+    public static long getMemory(){
+    	OperatingSystemMXBean osmxb = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);  
+        //long totalvirtualMemory = osmxb.getTotalPhysicalMemorySize(); // 物理内存  
+        return osmxb.getFreePhysicalMemorySize();
+    }
+  
 
     public static void main(String[] args) throws IOException, KeeperException, InterruptedException {
           System.out.print("请输入服务器名称（如server001）:");

@@ -111,10 +111,14 @@ public class HDFSProtocolHandler implements IURLProtocolHandler {
         int r = 0;
         try {
             r = fIn.read(buf, 0, size);
+            LOG.info("当前文件偏移量:"+fIn.getPos());
+            System.out.println("当前文件偏移量:"+fIn.getPos());
             // 老问题，如果一次FSDataInputStream不能读完所有的字节，说明有可能遇到block边界问题
             // 此时会重新读一次。
             if (r < size) {
                 int r2 = fIn.read(buf, r, size - r);
+                LOG.info("当前文件偏移量:"+fIn.getPos());
+                System.out.println("当前文件偏移量:"+fIn.getPos());
                 if (r2 >= 0)
                     r += r2;
             }
