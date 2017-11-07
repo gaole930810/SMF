@@ -15,7 +15,7 @@ import com.VMDServiceAPI.VMDClient;
 public class MultiThreadTest{
 	public static void main(String[]args) throws InterruptedException{
 		//并行度10000
-        int parallel = 100;
+        int parallel = Integer.valueOf(args[0]);
 
         //开始计时
         StopWatch sw = new StopWatch();
@@ -30,7 +30,10 @@ public class MultiThreadTest{
             			public void run(){
             				try {
             					signal.await();
-								VMDServerTest(signal,finish,index,Command.GET_FRAME,"hdfs://vm1:9000/yty/video/780.mp4","567");
+            					if(args.length==4)
+            						VMDServerTest(signal,finish,index,args[1],args[2],args[3]);
+            					if(args.length==3)
+    								VMDServerTest(signal,finish,index,args[1],args[2]);
 								finish.countDown();
 							} catch (ClassNotFoundException e) {
 								// TODO Auto-generated catch block
@@ -74,21 +77,21 @@ public class MultiThreadTest{
 	 *Results GENERATE(String url)
 	 *Results DELETE(String url) 
 	*/
-	public static void VMDServerTest(CountDownLatch signal, CountDownLatch finish,int index,int commandType,String... commandArgs) throws ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public static void VMDServerTest(CountDownLatch signal, CountDownLatch finish,int index,String commandType,String... commandArgs) throws ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		switch(commandType){
-		case Command.LS:
+		case "LS":
 			VMDClient.LS(commandArgs[0]).print();
 			break;
-		case Command.GET:
+		case "GET":
 			VMDClient.GET(commandArgs[0]).print();
 			break;
-		case Command.GET_FRAME:
+		case "GETFRAME":
 			VMDClient.GET_FRAME(commandArgs[0], commandArgs[1]).print();
 			break;
-		case Command.GENERATE:
+		case "GENERATE":
 			VMDClient.GENERATE(commandArgs[0]).print();
 			break;
-		case Command.DELETE:
+		case "DELETE":
 			VMDClient.DELETE(commandArgs[0]).print();
 			break;
 		default:

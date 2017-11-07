@@ -385,7 +385,8 @@ public class Server {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(bossGroup, workGroup)
                     .channel(NioServerSocketChannel.class)
-                    .option(ChannelOption.SO_BACKLOG, 1024)//配置TCP参数,能够设置很多,这里就只设置了backlog=1024,
+                    .option(ChannelOption.SO_SNDBUF, 1024*1024)
+                    .option(ChannelOption.SO_BACKLOG, 1024*10)//配置TCP参数,能够设置很多,这里就只设置了backlog=1024,
                     .childHandler(new ServerInitializer());//绑定I/O事件处理类
             LOG.debug("绑定端口号:" + PORT + ",等待同步成功");
             //System.out.println("绑定端口号:" + PORT + ",等待同步成功");

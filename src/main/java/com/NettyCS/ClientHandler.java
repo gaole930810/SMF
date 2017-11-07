@@ -59,8 +59,9 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     }
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        ByteBuf byteBuf = (ByteBuf) msg;
+        ByteBuf byteBuf = (ByteBuf) msg;        
         String resStr = getRes(byteBuf);
+        System.out.println(resStr.length());
         byteBuf.clear();
         results.results=resStr;
         if(command.Type==Command.GET_FRAME){
